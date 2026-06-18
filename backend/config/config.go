@@ -8,9 +8,11 @@ import (
 )
 
 type Config struct {
-	Port         string
-	DBConnString string
-	DBSchema     string
+	Port           string
+	DBConnString   string
+	DBSchema       string
+	GoogleClientID string
+	AppleBundleID  string
 }
 
 func LoadConfig() *Config {
@@ -22,11 +24,15 @@ func LoadConfig() *Config {
 	port := getEnv("PORT", "8080")
 	dbConn := getEnv("DATABASE_URL", "postgres://postgres:postgres@localhost:5432/tutora?sslmode=disable")
 	dbSchema := getEnv("DATABASE_SCHEMA", "tutora_app")
+	googleClientID := getEnv("GOOGLE_CLIENT_ID", "")
+	appleBundleID := getEnv("APPLE_BUNDLE_ID", "")
 
 	return &Config{
-		Port:         port,
-		DBConnString: dbConn,
-		DBSchema:     dbSchema,
+		Port:           port,
+		DBConnString:   dbConn,
+		DBSchema:       dbSchema,
+		GoogleClientID: googleClientID,
+		AppleBundleID:  appleBundleID,
 	}
 }
 

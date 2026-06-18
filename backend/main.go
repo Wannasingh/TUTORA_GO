@@ -39,7 +39,7 @@ func main() {
 
 	userUsecase := usecase.NewUserUsecase(userRepository)
 	tutorUsecase := usecase.NewTutorUsecase(tutorRepository, userRepository)
-	authUsecase := usecase.NewAuthUsecase(userRepository)
+	authUsecase := usecase.NewAuthUsecase(userRepository, cfg)
 
 	// 4. Setup Web Server (Gin)
 	r := gin.Default()

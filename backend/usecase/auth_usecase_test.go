@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"golang.org/x/crypto/bcrypt"
+	"github.com/Wannasingh/TUTORA_GO/backend/config"
 	"github.com/Wannasingh/TUTORA_GO/backend/domain"
 )
 
@@ -13,7 +14,8 @@ func TestRegisterWithEmail_Success(t *testing.T) {
 		users:        make(map[int]*domain.User),
 		usersByEmail: make(map[string]*domain.User),
 	}
-	au := NewAuthUsecase(repo)
+	cfg := &config.Config{}
+	au := NewAuthUsecase(repo, cfg)
 
 	req := &domain.RegisterRequest{
 		Name:     "Auth User",
@@ -54,7 +56,8 @@ func TestLoginWithEmail_Success(t *testing.T) {
 			"login@example.com": existingUser,
 		},
 	}
-	au := NewAuthUsecase(repo)
+	cfg := &config.Config{}
+	au := NewAuthUsecase(repo, cfg)
 
 	req := &domain.LoginRequest{
 		Email:    "login@example.com",
@@ -89,7 +92,8 @@ func TestLoginWithEmail_InvalidCredentials(t *testing.T) {
 			"login@example.com": existingUser,
 		},
 	}
-	au := NewAuthUsecase(repo)
+	cfg := &config.Config{}
+	au := NewAuthUsecase(repo, cfg)
 
 	req := &domain.LoginRequest{
 		Email:    "login@example.com",
@@ -111,10 +115,11 @@ func TestLoginWithGoogle_Mock(t *testing.T) {
 		users:        make(map[int]*domain.User),
 		usersByEmail: make(map[string]*domain.User),
 	}
-	au := NewAuthUsecase(repo)
+	cfg := &config.Config{GoogleClientID: "mock-google-client-id"}
+	au := NewAuthUsecase(repo, cfg)
 
 	req := &domain.OAuthLoginRequest{
-		Token: "mock_google_id123_test@google.com",
+		Token: "mock-google-token",
 		Role:  "student",
 	}
 
@@ -137,10 +142,11 @@ func TestLoginWithApple_Mock(t *testing.T) {
 		users:        make(map[int]*domain.User),
 		usersByEmail: make(map[string]*domain.User),
 	}
-	au := NewAuthUsecase(repo)
+	cfg := &config.Config{AppleBundleID: "com.wannasingh.tutora"}
+	au := NewAuthUsecase(repo, cfg)
 
 	req := &domain.OAuthLoginRequest{
-		Token: "mock_apple_id555_test@apple.com",
+		Token: "mock-apple-token",
 		Role:  "student",
 	}
 

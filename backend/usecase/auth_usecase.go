@@ -4,19 +4,23 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"strings"
 
 	"golang.org/x/crypto/bcrypt"
+	"github.com/Wannasingh/TUTORA_GO/backend/config"
 	"github.com/Wannasingh/TUTORA_GO/backend/domain"
 	"github.com/Wannasingh/TUTORA_GO/backend/utils"
 )
 
 type authUsecase struct {
 	userRepo domain.UserRepository
+	cfg      *config.Config
 }
 
-func NewAuthUsecase(repo domain.UserRepository) domain.AuthUsecase {
-	return &authUsecase{userRepo: repo}
+func NewAuthUsecase(repo domain.UserRepository, cfg *config.Config) domain.AuthUsecase {
+	return &authUsecase{
+		userRepo: repo,
+		cfg:      cfg,
+	}
 }
 
 func (a *authUsecase) RegisterWithEmail(ctx context.Context, req *domain.RegisterRequest) (*domain.AuthResponse, error) {
@@ -87,9 +91,8 @@ func (a *authUsecase) LoginWithEmail(ctx context.Context, req *domain.LoginReque
 }
 
 func (a *authUsecase) LoginWithGoogle(ctx context.Context, req *domain.OAuthLoginRequest) (*domain.AuthResponse, error) {
-	// In production, verify the ID Token with Google API or verify the JWT signature.
-	// For testing and baseline, we parse/verify the token. Here is a secure verification helper:
-	googleID, email, name, err := verifyGoogleToken(req.Token)
+	// Verify Google ID Token
+	googleID, email, name, err := utils.VerifyGoogleIDToken(req.Token, a.cfg.GoogleClientID)
 	if err != nil {
 		return nil, fmt.Errorf("google token verification failed: %v", err)
 	}
@@ -110,8 +113,6 @@ func (a *authUsecase) LoginWithGoogle(ctx context.Context, req *domain.OAuthLogi
 		if user != nil {
 			// Link existing email to Google ID
 			user.GoogleID = &googleID
-			// Normally we'd update user details in DB, but since we want to be lazy and standard:
-			// Let's link it or raise error. We can link by updating.
 		} else {
 			// Register new OAuth user
 			if req.Name != "" {
@@ -142,8 +143,8 @@ func (a *authUsecase) LoginWithGoogle(ctx context.Context, req *domain.OAuthLogi
 }
 
 func (a *authUsecase) LoginWithApple(ctx context.Context, req *domain.OAuthLoginRequest) (*domain.AuthResponse, error) {
-	// In production, verify Apple JWT using Apple Public Keys (JWKS).
-	appleID, email, name, err := verifyAppleToken(req.Token)
+	// Verify Apple ID Token
+	appleID, email, name, err := utils.VerifyAppleIdentityToken(req.Token, a.cfg.AppleBundleID)
 	if err != nil {
 		return nil, fmt.Errorf("apple token verification failed: %v", err)
 	}
@@ -187,33 +188,4 @@ func (a *authUsecase) LoginWithApple(ctx context.Context, req *domain.OAuthLogin
 		User:  user,
 		Token: token,
 	}, nil
-}
-
-// Token verification mockups/stubs for offline environment validation
-func verifyGoogleToken(token string) (string, string, string, error) {
-	if token == "" {
-		return "", "", "", errors.New("empty token")
-	}
-	// For testing/mocking, if token format is "mock_google_<id>_<email>", we parse it.
-	if strings.HasPrefix(token, "mock_google_") {
-		parts := strings.Split(token, "_")
-		if len(parts) >= 4 {
-			return parts[2], parts[3], "Google User", nil
-		}
-	}
-	// Default dummy for other inputs during initial test
-	return "g-12345", "google-user@tutora.com", "Google User", nil
-}
-
-func verifyAppleToken(token string) (string, string, string, error) {
-	if token == "" {
-		return "", "", "", errors.New("empty token")
-	}
-	if strings.HasPrefix(token, "mock_apple_") {
-		parts := strings.Split(token, "_")
-		if len(parts) >= 4 {
-			return parts[2], parts[3], "Apple User", nil
-		}
-	}
-	return "a-54321", "apple-user@tutora.com", "Apple User", nil
 }
