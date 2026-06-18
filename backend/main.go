@@ -35,10 +35,12 @@ func main() {
 	// 3. Initialize layers manually (Dependency Injection)
 	userRepository := repository.NewPostgresUserRepository(dbConn)
 	tutorRepository := repository.NewPostgresTutorRepository(dbConn)
+	postRepository := repository.NewPostgresPostRepository(dbConn)
 
 	userUsecase := usecase.NewUserUsecase(userRepository)
 	tutorUsecase := usecase.NewTutorUsecase(tutorRepository, userRepository)
 	authUsecase := usecase.NewAuthUsecase(userRepository, cfg)
+	postUsecase := usecase.NewPostUsecase(postRepository)
 
 	// 4. Setup Web Server (Gin)
 	r := gin.Default()
@@ -53,7 +55,7 @@ func main() {
 	})
 
 	// 5. Register Delivery HTTP handlers
-	delivery.NewHttpHandler(r, userUsecase, tutorUsecase, authUsecase, cfg)
+	delivery.NewHttpHandler(r, userUsecase, tutorUsecase, authUsecase, postUsecase, cfg)
 
 	// 6. Start Server
 	log.Printf("Server is running on port %s...", cfg.Port)

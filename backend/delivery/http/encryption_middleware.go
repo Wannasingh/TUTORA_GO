@@ -101,9 +101,9 @@ func EncryptionMiddleware(cfg *config.Config) gin.HandlerFunc {
 		// Encrypt response
 		ciphertext, err := utils.EncryptAES(responseBytes, writer.key)
 		if err != nil {
-			// Fallback to error response if encryption fails
-			c.Writer.WriteHeader(http.StatusInternalServerError)
-			c.Writer.Write([]byte(`{"error":"failed to encrypt response"}`))
+			// Restore original writer
+			c.Writer = writer.ResponseWriter
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to encrypt response"})
 			return
 		}
 
@@ -111,12 +111,14 @@ func EncryptionMiddleware(cfg *config.Config) gin.HandlerFunc {
 		wrapper := ResponsePayload{Data: ciphertext}
 		wrapperBytes, err := json.Marshal(wrapper)
 		if err != nil {
-			c.Writer.WriteHeader(http.StatusInternalServerError)
-			c.Writer.Write([]byte(`{"error":"failed to marshal response"}`))
+			// Restore original writer
+			c.Writer = writer.ResponseWriter
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to marshal response"})
 			return
 		}
 
-		// Write to actual client response
+		// Restore original writer to actually write to client
+		c.Writer = writer.ResponseWriter
 		c.Writer.Header().Set("Content-Type", "application/json")
 		c.Writer.Write(wrapperBytes)
 	}
