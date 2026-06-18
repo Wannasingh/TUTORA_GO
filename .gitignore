@@ -1,0 +1,35 @@
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Go/Backend
+backend/bin/
+backend/out/
+backend/*.test
+backend/*.out
+backend/.env
+backend/.env.local
+backend/tmp/
+
+# Xcode/iOS
+*.xcodeproj/*
+!*.xcodeproj/project.pbxproj
+!*.xcodeproj/xcshareddata/
+!*.xcodeproj/project.xcworkspace/
+*.xcworkspace/*
+!*.xcworkspace/contents.xcworkspacedata
+*.oauth
+default.profraw
+*.moved-aside
+DerivedData/
+build/
+Packages/
+.swiftpm/
+.build/
+
+# Application Secrets / Environments
+.env
+*.pem
+*.key
+credentials.json
