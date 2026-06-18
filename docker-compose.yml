@@ -1,0 +1,14 @@
+version: '3.8'
+
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: tutora-backend-local
+    ports:
+      - "8080:8080"
+    volumes:
+      # Mount the env file directly
+      - ./backend/.env:/app/.env
+    restart: always
