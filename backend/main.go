@@ -39,6 +39,7 @@ func main() {
 
 	userUsecase := usecase.NewUserUsecase(userRepository)
 	tutorUsecase := usecase.NewTutorUsecase(tutorRepository, userRepository)
+	authUsecase := usecase.NewAuthUsecase(userRepository)
 
 	// 4. Setup Web Server (Gin)
 	r := gin.Default()
@@ -53,7 +54,7 @@ func main() {
 	})
 
 	// 5. Register Delivery HTTP handlers
-	delivery.NewHttpHandler(r, userUsecase, tutorUsecase)
+	delivery.NewHttpHandler(r, userUsecase, tutorUsecase, authUsecase)
 
 	// 6. Start Server
 	log.Printf("Server is running on port %s...", cfg.Port)
