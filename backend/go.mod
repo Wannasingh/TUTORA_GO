@@ -1,4 +1,4 @@
-module github.com/haru/bytestutor/backend
+module github.com/Wannasingh/TUTORA_GO/backend
 
 go 1.22
 

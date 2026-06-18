@@ -5,7 +5,7 @@ import (
 	"errors"
 
 	"github.com/jackc/pgx/v5"
-	"github.com/haru/bytestutor/backend/domain"
+	"github.com/Wannasingh/TUTORA_GO/backend/domain"
 )
 
 type postgresUserRepository struct {

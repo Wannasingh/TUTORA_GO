@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"golang.org/x/crypto/bcrypt"
-	"github.com/haru/bytestutor/backend/domain"
+	"github.com/Wannasingh/TUTORA_GO/backend/domain"
 )
 
 func TestRegisterWithEmail_Success(t *testing.T) {
@@ -123,7 +123,7 @@ func TestLoginWithGoogle_Mock(t *testing.T) {
 		t.Fatalf("expected no error, got %v", err)
 	}
 
-	if resp.User.Email != "google-user@bytestutor.com" && resp.User.Email != "test@google.com" {
+	if resp.User.Email != "google-user@tutora.com" && resp.User.Email != "test@google.com" {
 		t.Errorf("unexpected user email: %s", resp.User.Email)
 	}
 
@@ -149,7 +149,7 @@ func TestLoginWithApple_Mock(t *testing.T) {
 		t.Fatalf("expected no error, got %v", err)
 	}
 
-	if resp.User.Email != "apple-user@bytestutor.com" && resp.User.Email != "test@apple.com" {
+	if resp.User.Email != "apple-user@tutora.com" && resp.User.Email != "test@apple.com" {
 		t.Errorf("unexpected user email: %s", resp.User.Email)
 	}
 

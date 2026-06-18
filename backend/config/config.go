@@ -20,7 +20,7 @@ func LoadConfig() *Config {
 	}
 
 	port := getEnv("PORT", "8080")
-	dbConn := getEnv("DATABASE_URL", "postgres://postgres:postgres@localhost:5432/bytestutor?sslmode=disable")
+	dbConn := getEnv("DATABASE_URL", "postgres://postgres:postgres@localhost:5432/tutora?sslmode=disable")
 	dbSchema := getEnv("DATABASE_SCHEMA", "tutora_app")
 
 	return &Config{

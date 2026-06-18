@@ -7,8 +7,8 @@ import (
 	"strings"
 
 	"golang.org/x/crypto/bcrypt"
-	"github.com/haru/bytestutor/backend/domain"
-	"github.com/haru/bytestutor/backend/utils"
+	"github.com/Wannasingh/TUTORA_GO/backend/domain"
+	"github.com/Wannasingh/TUTORA_GO/backend/utils"
 )
 
 type authUsecase struct {
@@ -202,7 +202,7 @@ func verifyGoogleToken(token string) (string, string, string, error) {
 		}
 	}
 	// Default dummy for other inputs during initial test
-	return "g-12345", "google-user@bytestutor.com", "Google User", nil
+	return "g-12345", "google-user@tutora.com", "Google User", nil
 }
 
 func verifyAppleToken(token string) (string, string, string, error) {
@@ -215,5 +215,5 @@ func verifyAppleToken(token string) (string, string, string, error) {
 			return parts[2], parts[3], "Apple User", nil
 		}
 	}
-	return "a-54321", "apple-user@bytestutor.com", "Apple User", nil
+	return "a-54321", "apple-user@tutora.com", "Apple User", nil
 }

@@ -5,7 +5,7 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/haru/bytestutor/backend/domain"
+	"github.com/Wannasingh/TUTORA_GO/backend/domain"
 )
 
 // MockUserRepository implements domain.UserRepository interface

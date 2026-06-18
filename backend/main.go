@@ -10,10 +10,10 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/jackc/pgx/v5"
 
-	"github.com/haru/bytestutor/backend/config"
-	delivery "github.com/haru/bytestutor/backend/delivery/http"
-	"github.com/haru/bytestutor/backend/repository"
-	"github.com/haru/bytestutor/backend/usecase"
+	"github.com/Wannasingh/TUTORA_GO/backend/config"
+	delivery "github.com/Wannasingh/TUTORA_GO/backend/delivery/http"
+	"github.com/Wannasingh/TUTORA_GO/backend/repository"
+	"github.com/Wannasingh/TUTORA_GO/backend/usecase"
 )
 
 func main() {
