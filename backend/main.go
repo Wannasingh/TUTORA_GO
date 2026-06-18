@@ -53,7 +53,7 @@ func main() {
 	})
 
 	// 5. Register Delivery HTTP handlers
-	delivery.NewHttpHandler(r, userUsecase, tutorUsecase, authUsecase)
+	delivery.NewHttpHandler(r, userUsecase, tutorUsecase, authUsecase, cfg)
 
 	// 6. Start Server
 	log.Printf("Server is running on port %s...", cfg.Port)

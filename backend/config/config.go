@@ -8,11 +8,12 @@ import (
 )
 
 type Config struct {
-	Port           string
-	DBConnString   string
-	DBSchema       string
-	GoogleClientID string
-	AppleBundleID  string
+	Port                 string
+	DBConnString         string
+	DBSchema             string
+	GoogleClientID       string
+	AppleBundleID        string
+	PayloadEncryptionKey string
 }
 
 func LoadConfig() *Config {
@@ -26,13 +27,15 @@ func LoadConfig() *Config {
 	dbSchema := getEnv("DATABASE_SCHEMA", "tutora_app")
 	googleClientID := getEnv("GOOGLE_CLIENT_ID", "")
 	appleBundleID := getEnv("APPLE_BUNDLE_ID", "")
+	payloadEncryptionKey := getEnv("PAYLOAD_ENCRYPTION_KEY", "TutoraDefaultPayloadEncryptKey32c")
 
 	return &Config{
-		Port:           port,
-		DBConnString:   dbConn,
-		DBSchema:       dbSchema,
-		GoogleClientID: googleClientID,
-		AppleBundleID:  appleBundleID,
+		Port:                 port,
+		DBConnString:         dbConn,
+		DBSchema:             dbSchema,
+		GoogleClientID:       googleClientID,
+		AppleBundleID:        appleBundleID,
+		PayloadEncryptionKey: payloadEncryptionKey,
 	}
 }
 

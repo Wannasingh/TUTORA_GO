@@ -5,6 +5,7 @@ import (
 	"strconv"
 
 	"github.com/gin-gonic/gin"
+	"github.com/Wannasingh/TUTORA_GO/backend/config"
 	"github.com/Wannasingh/TUTORA_GO/backend/domain"
 )
 
@@ -14,7 +15,7 @@ type HttpHandler struct {
 	authUsecase  domain.AuthUsecase
 }
 
-func NewHttpHandler(r *gin.Engine, uu domain.UserUsecase, tu domain.TutorUsecase, au domain.AuthUsecase) {
+func NewHttpHandler(r *gin.Engine, uu domain.UserUsecase, tu domain.TutorUsecase, au domain.AuthUsecase, cfg *config.Config) {
 	handler := &HttpHandler{
 		userUsecase:  uu,
 		tutorUsecase: tu,
@@ -22,6 +23,8 @@ func NewHttpHandler(r *gin.Engine, uu domain.UserUsecase, tu domain.TutorUsecase
 	}
 
 	api := r.Group("/api")
+	api.Use(DecryptionMiddleware(cfg))
+	api.Use(EncryptionMiddleware(cfg))
 	{
 		// Public Auth Endpoints
 		auth := api.Group("/auth")
