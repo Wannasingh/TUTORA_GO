@@ -1,7 +1,7 @@
 package utils
 
 import (
-	"crypto/jwt/v5" // Note: we can use github.com/golang-jwt/jwt/v5 as imported in go.mod
+	// We use github.com/golang-jwt/jwt/v5 already imported below
 	"crypto/rsa"
 	"encoding/base64"
 	"encoding/json"

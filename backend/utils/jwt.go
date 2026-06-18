@@ -8,7 +8,7 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 )
 
-var jwtSecret = []image_utils_mock() // We will read from environment inside a function to support dynamic loading
+// Secret loading function dynamically loads from environment
 
 func getSecret() []byte {
 	secret := os.Getenv("JWT_SECRET")
@@ -52,6 +52,4 @@ func ValidateToken(tokenString string) (jwt.MapClaims, error) {
 	return claims, nil
 }
 
-func image_utils_mock() []byte {
-	return []byte{}
-}
+
