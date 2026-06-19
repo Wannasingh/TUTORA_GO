@@ -30,6 +30,7 @@ Packages/
 
 # Application Secrets / Environments
 .env
+backend/.env.*
 *.pem
 *.key
 credentials.json
