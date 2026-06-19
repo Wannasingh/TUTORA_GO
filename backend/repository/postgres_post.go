@@ -75,11 +75,40 @@ func (r *postgresPostRepository) List(ctx context.Context, subject string, reque
 	              FROM tutora_app.posts p
 	              JOIN tutora_app.users u ON p.user_id = u.id`
 
+	var orderClause string
+	if requesterUserID > 0 {
+		orderClause = ` ORDER BY (
+		                     (
+		                       (SELECT COUNT(*) FROM tutora_app.post_likes WHERE post_id = p.id) * 1.0 +
+		                       (SELECT COUNT(*) FROM tutora_app.comments WHERE post_id = p.id) * 3.0 +
+		                       (SELECT COUNT(*) FROM tutora_app.post_saves WHERE post_id = p.id) * 2.0 + 1.0
+		                     ) / 
+		                     POWER(EXTRACT(EPOCH FROM (NOW() - p.created_at)) / 3600 + 2, 1.5)
+		                   ) * (
+		                     CASE WHEN p.subject IN (
+		                       SELECT subject FROM tutora_app.tutors WHERE user_id = $1
+		                       UNION
+		                       SELECT p2.subject FROM tutora_app.post_likes pl JOIN tutora_app.posts p2 ON pl.post_id = p2.id WHERE pl.user_id = $1
+		                       UNION
+		                       SELECT p3.subject FROM tutora_app.post_saves ps JOIN tutora_app.posts p3 ON ps.post_id = p3.id WHERE ps.user_id = $1
+		                     ) THEN 1.5 ELSE 1.0 END
+		                   ) DESC, p.created_at DESC`
+	} else {
+		orderClause = ` ORDER BY (
+		                    (
+		                      (SELECT COUNT(*) FROM tutora_app.post_likes WHERE post_id = p.id) * 1.0 +
+		                      (SELECT COUNT(*) FROM tutora_app.comments WHERE post_id = p.id) * 3.0 +
+		                      (SELECT COUNT(*) FROM tutora_app.post_saves WHERE post_id = p.id) * 2.0 + 1.0
+		                    ) / 
+		                    POWER(EXTRACT(EPOCH FROM (NOW() - p.created_at)) / 3600 + 2, 1.5)
+		                  ) DESC, p.created_at DESC`
+	}
+
 	if subject != "" {
-		query := baseQuery + ` WHERE p.subject ILIKE $2 ORDER BY p.created_at DESC`
+		query := baseQuery + ` WHERE p.subject ILIKE $2` + orderClause
 		rows, err = r.db.Query(ctx, query, requesterUserID, "%"+subject+"%")
 	} else {
-		query := baseQuery + ` ORDER BY p.created_at DESC`
+		query := baseQuery + orderClause
 		rows, err = r.db.Query(ctx, query, requesterUserID)
 	}
 
