@@ -22,10 +22,11 @@ type ociStorageService struct {
 	s3Client   *s3.Client
 	bucketName string
 	endpoint   string
+	cdnURL     string
 }
 
 // NewOCIStorageService initializes a new OCI S3-compatible storage service
-func NewOCIStorageService(accessKeyID, secretAccessKey, region, bucketName, endpoint string) (StorageService, error) {
+func NewOCIStorageService(accessKeyID, secretAccessKey, region, bucketName, endpoint, cdnURL string) (StorageService, error) {
 	// Ensure endpoint starts with http:// or https:// to prevent empty protocol scheme error in AWS SDK
 	if endpoint != "" && !strings.HasPrefix(endpoint, "http://") && !strings.HasPrefix(endpoint, "https://") {
 		endpoint = "https://" + endpoint
@@ -64,6 +65,7 @@ func NewOCIStorageService(accessKeyID, secretAccessKey, region, bucketName, endp
 		s3Client:   s3Client,
 		bucketName: bucketName,
 		endpoint:   endpoint,
+		cdnURL:     cdnURL,
 	}, nil
 }
 
@@ -99,7 +101,16 @@ func (s *ociStorageService) UploadFile(ctx context.Context, fileName string, fil
 		return "", fmt.Errorf("failed to upload object to OCI bucket: %v", err)
 	}
 
-	fileURL := fmt.Sprintf("%s/%s/%s", s.endpoint, s.bucketName, uniqueFileName)
+	baseURL := s.endpoint
+	if s.cdnURL != "" {
+		baseURL = s.cdnURL
+	}
+	// Ensure baseURL has protocol scheme
+	if !strings.HasPrefix(baseURL, "http://") && !strings.HasPrefix(baseURL, "https://") {
+		baseURL = "https://" + baseURL
+	}
+
+	fileURL := fmt.Sprintf("%s/%s/%s", baseURL, s.bucketName, uniqueFileName)
 	return fileURL, nil
 }
 

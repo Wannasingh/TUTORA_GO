@@ -19,6 +19,7 @@ type Config struct {
 	OCIS3Region          string
 	OCIS3BucketName      string
 	OCIS3Endpoint        string
+	OCIS3CdnURL          string
 }
 
 func LoadConfig() *Config {
@@ -38,6 +39,7 @@ func LoadConfig() *Config {
 	ociRegion := getEnv("OCI_S3_REGION", "")
 	ociBucketName := getEnv("OCI_S3_BUCKET_NAME", "")
 	ociEndpoint := getEnv("OCI_S3_ENDPOINT", "")
+	ociCdnURL := getEnv("OCI_S3_CDN_URL", "")
 
 	return &Config{
 		Port:                 port,
@@ -51,6 +53,7 @@ func LoadConfig() *Config {
 		OCIS3Region:          ociRegion,
 		OCIS3BucketName:      ociBucketName,
 		OCIS3Endpoint:        ociEndpoint,
+		OCIS3CdnURL:          ociCdnURL,
 	}
 }
 

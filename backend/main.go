@@ -93,6 +93,7 @@ func main() {
 		cfg.OCIS3Region,
 		cfg.OCIS3BucketName,
 		cfg.OCIS3Endpoint,
+		cfg.OCIS3CdnURL,
 	)
 	if err != nil {
 		log.Fatalf("Failed to initialize OCI storage service: %v", err)
