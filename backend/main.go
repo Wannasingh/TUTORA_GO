@@ -12,6 +12,7 @@ import (
 
 	"github.com/Wannasingh/TUTORA_GO/backend/config"
 	delivery "github.com/Wannasingh/TUTORA_GO/backend/delivery/http"
+	"github.com/Wannasingh/TUTORA_GO/backend/delivery/ws"
 	"github.com/Wannasingh/TUTORA_GO/backend/repository"
 	"github.com/Wannasingh/TUTORA_GO/backend/usecase"
 	"github.com/Wannasingh/TUTORA_GO/backend/utils"
@@ -39,14 +40,39 @@ func main() {
 	}
 
 	// 3. Initialize layers manually (Dependency Injection)
+
+	// --- Repositories ---
 	userRepository := repository.NewPostgresUserRepository(dbPool)
 	tutorRepository := repository.NewPostgresTutorRepository(dbPool)
 	postRepository := repository.NewPostgresPostRepository(dbPool)
+	storeRepository := repository.NewPostgresStoreRepository(dbPool)
+	followRepository := repository.NewPostgresFollowRepository(dbPool)
+	reviewRepository := repository.NewPostgresReviewRepository(dbPool)
+	messageRepository := repository.NewPostgresMessageRepository(dbPool)
+	notificationRepository := repository.NewPostgresNotificationRepository(dbPool)
+	studyRepository := repository.NewPostgresStudyRepository(dbPool)
 
-	userUsecase := usecase.NewUserUsecase(userRepository)
+	// --- Usecases ---
+	userUsecase := usecase.NewUserUsecase(userRepository, followRepository)
 	tutorUsecase := usecase.NewTutorUsecase(tutorRepository, userRepository)
 	authUsecase := usecase.NewAuthUsecase(userRepository, cfg)
-	postUsecase := usecase.NewPostUsecase(postRepository)
+	postUsecase := delivery.NewStoreUsecaseHelper(usecase.NewPostUsecase(postRepository), usecase.NewStoreUsecase(storeRepository))
+	followUsecase := usecase.NewFollowUsecase(followRepository)
+	reviewUsecase := usecase.NewReviewUsecase(reviewRepository)
+	messageUsecase := usecase.NewMessageUsecase(messageRepository)
+	notificationUsecase := usecase.NewNotificationUsecase(notificationRepository)
+	studyUsecase := usecase.NewStudyUsecase(studyRepository)
+
+	// --- WebSocket Hub ---
+	hub := ws.NewHub()
+	go hub.Run()
+
+	// --- HTTP Handlers ---
+	followHandler := delivery.NewFollowHandler(followUsecase, reviewUsecase)
+	profileHandler := delivery.NewProfileHandler(userUsecase, usecase.NewPostUsecase(postRepository))
+	messageHandler := delivery.NewMessageHandler(messageUsecase, hub)
+	notificationHandler := delivery.NewNotificationHandler(notificationUsecase)
+	studyHandler := delivery.NewStudyHandler(studyUsecase)
 
 	// 4. Setup Web Server (Gin)
 	r := gin.Default()
@@ -73,7 +99,8 @@ func main() {
 	}
 
 	// 5. Register Delivery HTTP handlers
-	delivery.NewHttpHandler(r, userUsecase, tutorUsecase, authUsecase, postUsecase, storageService, cfg)
+	delivery.NewHttpHandler(r, userUsecase, tutorUsecase, authUsecase, postUsecase, storageService, cfg,
+		followHandler, profileHandler, messageHandler, notificationHandler, studyHandler)
 
 	// 6. Start Server
 	log.Printf("Server is running on port %s...", cfg.Port)

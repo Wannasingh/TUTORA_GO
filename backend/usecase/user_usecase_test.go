@@ -58,6 +58,20 @@ func (m *MockUserRepository) Delete(ctx context.Context, id int) error {
 	return nil
 }
 
+func (m *MockUserRepository) Update(ctx context.Context, user *domain.User) error {
+	m.users[user.ID] = user
+	return nil
+}
+
+func (m *MockUserRepository) CountUserPosts(ctx context.Context, userID int) (int, error) {
+	return 0, nil
+}
+
+func (m *MockUserRepository) CountUserReposts(ctx context.Context, userID int) (int, error) {
+	return 0, nil
+}
+
+
 func TestRegisterUser_Success(t *testing.T) {
 	repo := &MockUserRepository{
 		users:        make(map[int]*domain.User),
