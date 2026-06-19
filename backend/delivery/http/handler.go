@@ -5,43 +5,123 @@ import (
 	"strconv"
 
 	"github.com/gin-gonic/gin"
-	"github.com/haru/bytestutor/backend/domain"
+	"github.com/Wannasingh/TUTORA_GO/backend/config"
+	"github.com/Wannasingh/TUTORA_GO/backend/domain"
 )
 
 type HttpHandler struct {
 	userUsecase  domain.UserUsecase
 	tutorUsecase domain.TutorUsecase
+	authUsecase  domain.AuthUsecase
+	postUsecase  domain.PostUsecase
 }
 
-func NewHttpHandler(r *gin.Engine, uu domain.UserUsecase, tu domain.TutorUsecase) {
+func NewHttpHandler(r *gin.Engine, uu domain.UserUsecase, tu domain.TutorUsecase, au domain.AuthUsecase, pu domain.PostUsecase, cfg *config.Config) {
 	handler := &HttpHandler{
 		userUsecase:  uu,
 		tutorUsecase: tu,
+		authUsecase:  au,
+		postUsecase:  pu,
 	}
 
 	api := r.Group("/api")
+	api.Use(DecryptionMiddleware(cfg))
+	api.Use(EncryptionMiddleware(cfg))
 	{
-		api.POST("/users", handler.RegisterUser)
-		api.GET("/users/:id", handler.GetUserProfile)
-		api.POST("/tutors", handler.BecomeTutor)
+		// Public Auth Endpoints
+		auth := api.Group("/auth")
+		{
+			auth.POST("/register", handler.RegisterWithEmail)
+			auth.POST("/login", handler.LoginWithEmail)
+			auth.POST("/google", handler.LoginWithGoogle)
+			auth.POST("/apple", handler.LoginWithApple)
+		}
+
+		// Public Resources
 		api.GET("/tutors/:id", handler.GetTutorProfile)
 		api.GET("/tutors", handler.SearchTutors)
+		api.GET("/posts", handler.ListFeed)
+		api.GET("/posts/:id", handler.GetPostDetails)
+
+		// Protected Endpoints
+		protected := api.Group("")
+		protected.Use(AuthMiddleware())
+		{
+			protected.GET("/users/:id", handler.GetUserProfile)
+			protected.POST("/tutors", handler.BecomeTutor)
+			protected.DELETE("/users/me", handler.DeleteAccount)
+
+			// Protected Post Actions
+			protected.POST("/posts", handler.CreatePost)
+			protected.POST("/posts/:id/like", handler.ToggleLike)
+			protected.POST("/posts/:id/save", handler.ToggleSave)
+			protected.POST("/posts/:id/comments", handler.AddComment)
+		}
 	}
 }
 
-func (h *HttpHandler) RegisterUser(c *gin.Context) {
-	var user domain.User
-	if err := c.ShouldBindJSON(&user); err != nil {
+func (h *HttpHandler) RegisterWithEmail(c *gin.Context) {
+	var req domain.RegisterRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
-	if err := h.userUsecase.Register(c.Request.Context(), &user); err != nil {
+	resp, err := h.authUsecase.RegisterWithEmail(c.Request.Context(), &req)
+	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
-	c.JSON(http.StatusCreated, user)
+	c.JSON(http.StatusCreated, resp)
+}
+
+func (h *HttpHandler) LoginWithEmail(c *gin.Context) {
+	var req domain.LoginRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	resp, err := h.authUsecase.LoginWithEmail(c.Request.Context(), &req)
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, resp)
+}
+
+func (h *HttpHandler) LoginWithGoogle(c *gin.Context) {
+	var req domain.OAuthLoginRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	resp, err := h.authUsecase.LoginWithGoogle(c.Request.Context(), &req)
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, resp)
+}
+
+func (h *HttpHandler) LoginWithApple(c *gin.Context) {
+	var req domain.OAuthLoginRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	resp, err := h.authUsecase.LoginWithApple(c.Request.Context(), &req)
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, resp)
 }
 
 func (h *HttpHandler) GetUserProfile(c *gin.Context) {
@@ -49,6 +129,12 @@ func (h *HttpHandler) GetUserProfile(c *gin.Context) {
 	id, err := strconv.Atoi(idStr)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid user id"})
+		return
+	}
+
+	requesterID, _ := c.Get("userID")
+	if requesterID.(int) != id {
+		c.JSON(http.StatusForbidden, gin.H{"error": "access denied"})
 		return
 	}
 
@@ -69,6 +155,12 @@ func (h *HttpHandler) BecomeTutor(c *gin.Context) {
 	var tutor domain.Tutor
 	if err := c.ShouldBindJSON(&tutor); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	requesterID, _ := c.Get("userID")
+	if requesterID.(int) != tutor.UserID {
+		c.JSON(http.StatusForbidden, gin.H{"error": "cannot register tutor profile for another user"})
 		return
 	}
 
@@ -111,4 +203,153 @@ func (h *HttpHandler) SearchTutors(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, tutors)
+}
+
+func (h *HttpHandler) DeleteAccount(c *gin.Context) {
+	requesterID, _ := c.Get("userID")
+
+	if err := h.userUsecase.DeleteAccount(c.Request.Context(), requesterID.(int)); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "account successfully deleted"})
+}
+
+func (h *HttpHandler) CreatePost(c *gin.Context) {
+	requesterID, _ := c.Get("userID")
+	var req domain.CreatePostRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	post := &domain.Post{
+		UserID:  requesterID.(int),
+		Subject: req.Subject,
+		Title:   req.Title,
+		Body:    req.Body,
+	}
+
+	if err := h.postUsecase.CreatePost(c.Request.Context(), post); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusCreated, post)
+}
+
+func (h *HttpHandler) ListFeed(c *gin.Context) {
+	subject := c.Query("subject")
+	
+	// Optional requester ID for liked/saved checks
+	var requesterUserID int
+	authHeader := c.GetHeader("Authorization")
+	if authHeader != "" {
+		// Attempt to parse token if provided, but don't block request if not authenticated (feed is public)
+		// We can decrypt if they pass valid token
+		// But to keep it simple and stateless:
+		// We'll read the token if valid, otherwise keep requesterUserID as 0
+		// E.g. helper
+	}
+
+	posts, err := h.postUsecase.ListFeed(c.Request.Context(), subject, requesterUserID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, posts)
+}
+
+func (h *HttpHandler) GetPostDetails(c *gin.Context) {
+	idStr := c.Param("id")
+	id, err := strconv.Atoi(idStr)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid post id"})
+		return
+	}
+
+	var requesterUserID int
+	// Read requester ID if logged in (optional check)
+
+	post, comments, err := h.postUsecase.GetPostDetails(c.Request.Context(), id, requesterUserID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	if post == nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "post not found"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"post":     post,
+		"comments": comments,
+	})
+}
+
+func (h *HttpHandler) ToggleLike(c *gin.Context) {
+	idStr := c.Param("id")
+	postID, err := strconv.Atoi(idStr)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid post id"})
+		return
+	}
+
+	requesterID, _ := c.Get("userID")
+	liked, err := h.postUsecase.ToggleLike(c.Request.Context(), postID, requesterID.(int))
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"liked": liked})
+}
+
+func (h *HttpHandler) ToggleSave(c *gin.Context) {
+	idStr := c.Param("id")
+	postID, err := strconv.Atoi(idStr)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid post id"})
+		return
+	}
+
+	requesterID, _ := c.Get("userID")
+	saved, err := h.postUsecase.ToggleSave(c.Request.Context(), postID, requesterID.(int))
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"saved": saved})
+}
+
+func (h *HttpHandler) AddComment(c *gin.Context) {
+	idStr := c.Param("id")
+	postID, err := strconv.Atoi(idStr)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid post id"})
+		return
+	}
+
+	requesterID, _ := c.Get("userID")
+	var req domain.CreateCommentRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	comment := &domain.Comment{
+		PostID: postID,
+		UserID: requesterID.(int),
+		Body:   req.Body,
+	}
+
+	if err := h.postUsecase.AddPostComment(c.Request.Context(), comment); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusCreated, comment)
 }

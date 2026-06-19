@@ -4,16 +4,15 @@ import (
 	"context"
 	"log"
 	"net/http"
-	"os"
 	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/jackc/pgx/v5"
 
-	"github.com/haru/bytestutor/backend/config"
-	delivery "github.com/haru/bytestutor/backend/delivery/http"
-	"github.com/haru/bytestutor/backend/repository"
-	"github.com/haru/bytestutor/backend/usecase"
+	"github.com/Wannasingh/TUTORA_GO/backend/config"
+	delivery "github.com/Wannasingh/TUTORA_GO/backend/delivery/http"
+	"github.com/Wannasingh/TUTORA_GO/backend/repository"
+	"github.com/Wannasingh/TUTORA_GO/backend/usecase"
 )
 
 func main() {
@@ -36,9 +35,12 @@ func main() {
 	// 3. Initialize layers manually (Dependency Injection)
 	userRepository := repository.NewPostgresUserRepository(dbConn)
 	tutorRepository := repository.NewPostgresTutorRepository(dbConn)
+	postRepository := repository.NewPostgresPostRepository(dbConn)
 
 	userUsecase := usecase.NewUserUsecase(userRepository)
 	tutorUsecase := usecase.NewTutorUsecase(tutorRepository, userRepository)
+	authUsecase := usecase.NewAuthUsecase(userRepository, cfg)
+	postUsecase := usecase.NewPostUsecase(postRepository)
 
 	// 4. Setup Web Server (Gin)
 	r := gin.Default()
@@ -53,7 +55,7 @@ func main() {
 	})
 
 	// 5. Register Delivery HTTP handlers
-	delivery.NewHttpHandler(r, userUsecase, tutorUsecase)
+	delivery.NewHttpHandler(r, userUsecase, tutorUsecase, authUsecase, postUsecase, cfg)
 
 	// 6. Start Server
 	log.Printf("Server is running on port %s...", cfg.Port)

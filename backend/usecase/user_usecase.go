@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 
-	"github.com/haru/bytestutor/backend/domain"
+	"github.com/Wannasingh/TUTORA_GO/backend/domain"
 )
 
 type userUsecase struct {
@@ -29,4 +29,8 @@ func (u *userUsecase) Register(ctx context.Context, user *domain.User) error {
 
 func (u *userUsecase) GetProfile(ctx context.Context, id int) (*domain.User, error) {
 	return u.userRepo.GetByID(ctx, id)
+}
+
+func (u *userUsecase) DeleteAccount(ctx context.Context, id int) error {
+	return u.userRepo.Delete(ctx, id)
 }

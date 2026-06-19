@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 
-	"github.com/haru/bytestutor/backend/domain"
+	"github.com/Wannasingh/TUTORA_GO/backend/domain"
 )
 
 type tutorUsecase struct {
