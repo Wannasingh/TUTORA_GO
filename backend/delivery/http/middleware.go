@@ -42,7 +42,22 @@ func AuthMiddleware() gin.HandlerFunc {
 
 		c.Set("userID", int(userID))
 		c.Set("email", claims["email"].(string))
-		c.Set("role", claims["role"].(string))
+
+		var roles []string
+		if claimsRoles, ok := claims["roles"].([]interface{}); ok {
+			for _, r := range claimsRoles {
+				if rStr, ok := r.(string); ok {
+					roles = append(roles, rStr)
+				}
+			}
+		}
+		c.Set("roles", roles)
+
+		if len(roles) > 0 {
+			c.Set("role", roles[0])
+		} else {
+			c.Set("role", "")
+		}
 
 		c.Next()
 	}

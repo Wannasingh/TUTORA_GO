@@ -19,11 +19,11 @@ func getSecret() []byte {
 	return []byte(secret)
 }
 
-func GenerateToken(userID int, email string, role string) (string, error) {
+func GenerateToken(userID int, email string, roles []string) (string, error) {
 	claims := jwt.MapClaims{
 		"sub":   userID,
 		"email": email,
-		"role":  role,
+		"roles": roles,
 		"exp":   time.Now().Add(72 * time.Hour).Unix(),
 		"iat":   time.Now().Unix(),
 	}

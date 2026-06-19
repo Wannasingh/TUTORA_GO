@@ -1,27 +1,31 @@
 package http
 
 import (
+	"fmt"
 	"net/http"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
 	"github.com/Wannasingh/TUTORA_GO/backend/config"
 	"github.com/Wannasingh/TUTORA_GO/backend/domain"
+	"github.com/Wannasingh/TUTORA_GO/backend/utils"
 )
 
 type HttpHandler struct {
-	userUsecase  domain.UserUsecase
-	tutorUsecase domain.TutorUsecase
-	authUsecase  domain.AuthUsecase
-	postUsecase  domain.PostUsecase
+	userUsecase    domain.UserUsecase
+	tutorUsecase   domain.TutorUsecase
+	authUsecase    domain.AuthUsecase
+	postUsecase    domain.PostUsecase
+	storageService utils.StorageService
 }
 
-func NewHttpHandler(r *gin.Engine, uu domain.UserUsecase, tu domain.TutorUsecase, au domain.AuthUsecase, pu domain.PostUsecase, cfg *config.Config) {
+func NewHttpHandler(r *gin.Engine, uu domain.UserUsecase, tu domain.TutorUsecase, au domain.AuthUsecase, pu domain.PostUsecase, storage utils.StorageService, cfg *config.Config) {
 	handler := &HttpHandler{
-		userUsecase:  uu,
-		tutorUsecase: tu,
-		authUsecase:  au,
-		postUsecase:  pu,
+		userUsecase:    uu,
+		tutorUsecase:   tu,
+		authUsecase:    au,
+		postUsecase:    pu,
+		storageService: storage,
 	}
 
 	api := r.Group("/api")
@@ -56,6 +60,9 @@ func NewHttpHandler(r *gin.Engine, uu domain.UserUsecase, tu domain.TutorUsecase
 			protected.POST("/posts/:id/like", handler.ToggleLike)
 			protected.POST("/posts/:id/save", handler.ToggleSave)
 			protected.POST("/posts/:id/comments", handler.AddComment)
+
+			// Protected Upload Action
+			protected.POST("/upload", handler.UploadImage)
 		}
 	}
 }
@@ -225,10 +232,11 @@ func (h *HttpHandler) CreatePost(c *gin.Context) {
 	}
 
 	post := &domain.Post{
-		UserID:  requesterID.(int),
-		Subject: req.Subject,
-		Title:   req.Title,
-		Body:    req.Body,
+		UserID:   requesterID.(int),
+		Subject:  req.Subject,
+		Title:    req.Title,
+		Body:     req.Body,
+		ImageURL: req.ImageURL,
 	}
 
 	if err := h.postUsecase.CreatePost(c.Request.Context(), post); err != nil {
@@ -341,9 +349,10 @@ func (h *HttpHandler) AddComment(c *gin.Context) {
 	}
 
 	comment := &domain.Comment{
-		PostID: postID,
-		UserID: requesterID.(int),
-		Body:   req.Body,
+		PostID:   postID,
+		UserID:   requesterID.(int),
+		Body:     req.Body,
+		ImageURL: req.ImageURL,
 	}
 
 	if err := h.postUsecase.AddPostComment(c.Request.Context(), comment); err != nil {
@@ -352,4 +361,35 @@ func (h *HttpHandler) AddComment(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusCreated, comment)
+}
+
+func (h *HttpHandler) UploadImage(c *gin.Context) {
+	file, header, err := c.Request.FormFile("image")
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "file 'image' is required"})
+		return
+	}
+	defer file.Close()
+
+	// Verify it's an image
+	contentType := header.Header.Get("Content-Type")
+	if contentType != "image/jpeg" && contentType != "image/png" && contentType != "image/gif" && contentType != "image/webp" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "only jpeg, png, gif, and webp images are allowed"})
+		return
+	}
+
+	// Compress and optimize image to JPEG to save storage space
+	optimizedReader, optimizedContentType, err := utils.OptimizeImage(file, contentType)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": fmt.Sprintf("failed to parse/compress image: %v", err)})
+		return
+	}
+
+	url, err := h.storageService.UploadFile(c.Request.Context(), header.Filename, optimizedReader, optimizedContentType)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"url": url})
 }

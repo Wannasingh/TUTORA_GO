@@ -9,6 +9,7 @@ type Post struct {
 	Subject       string   `json:"subject"`
 	Title         string   `json:"title"`
 	Body          string   `json:"body"`
+	ImageURL      *string  `json:"image_url,omitempty"`
 	LikesCount    int      `json:"likes_count"`
 	CommentsCount int      `json:"comments_count"`
 	SavesCount    int      `json:"saves_count"`
@@ -19,23 +20,26 @@ type Post struct {
 }
 
 type Comment struct {
-	ID        int    `json:"id"`
-	PostID    int    `json:"post_id"`
-	UserID    int    `json:"user_id"`
-	User      *User  `json:"user,omitempty"`
-	Body      string `json:"body"`
-	CreatedAt string `json:"created_at"`
-	UpdatedAt string `json:"updated_at"`
+	ID        int     `json:"id"`
+	PostID    int     `json:"post_id"`
+	UserID    int     `json:"user_id"`
+	User      *User   `json:"user,omitempty"`
+	Body      string  `json:"body"`
+	ImageURL  *string `json:"image_url,omitempty"`
+	CreatedAt string  `json:"created_at"`
+	UpdatedAt string  `json:"updated_at"`
 }
 
 type CreatePostRequest struct {
-	Subject string `json:"subject" binding:"required"`
-	Title   string `json:"title" binding:"required"`
-	Body    string `json:"body" binding:"required"`
+	Subject  string  `json:"subject" binding:"required"`
+	Title    string  `json:"title" binding:"required"`
+	Body     string  `json:"body" binding:"required"`
+	ImageURL *string `json:"image_url,omitempty"`
 }
 
 type CreateCommentRequest struct {
-	Body string `json:"body" binding:"required"`
+	Body     string  `json:"body" binding:"required"`
+	ImageURL *string `json:"image_url,omitempty"`
 }
 
 type PostRepository interface {

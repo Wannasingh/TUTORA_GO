@@ -44,7 +44,7 @@ func (a *authUsecase) RegisterWithEmail(ctx context.Context, req *domain.Registe
 	user := &domain.User{
 		Name:         req.Name,
 		Email:        req.Email,
-		Role:         req.Role,
+		Roles:        []string{req.Role},
 		PasswordHash: &passwordStr,
 	}
 
@@ -53,7 +53,7 @@ func (a *authUsecase) RegisterWithEmail(ctx context.Context, req *domain.Registe
 	}
 
 	// Generate JWT
-	token, err := utils.GenerateToken(user.ID, user.Email, user.Role)
+	token, err := utils.GenerateToken(user.ID, user.Email, user.Roles)
 	if err != nil {
 		return nil, err
 	}
@@ -79,7 +79,7 @@ func (a *authUsecase) LoginWithEmail(ctx context.Context, req *domain.LoginReque
 		return nil, errors.New("invalid email or password")
 	}
 
-	token, err := utils.GenerateToken(user.ID, user.Email, user.Role)
+	token, err := utils.GenerateToken(user.ID, user.Email, user.Roles)
 	if err != nil {
 		return nil, err
 	}
@@ -121,7 +121,7 @@ func (a *authUsecase) LoginWithGoogle(ctx context.Context, req *domain.OAuthLogi
 			user = &domain.User{
 				Name:     name,
 				Email:    email,
-				Role:     req.Role,
+				Roles:    []string{req.Role},
 				GoogleID: &googleID,
 			}
 			if err := a.userRepo.Create(ctx, user); err != nil {
@@ -131,7 +131,7 @@ func (a *authUsecase) LoginWithGoogle(ctx context.Context, req *domain.OAuthLogi
 	}
 
 	// Generate JWT
-	token, err := utils.GenerateToken(user.ID, user.Email, user.Role)
+	token, err := utils.GenerateToken(user.ID, user.Email, user.Roles)
 	if err != nil {
 		return nil, err
 	}
@@ -170,7 +170,7 @@ func (a *authUsecase) LoginWithApple(ctx context.Context, req *domain.OAuthLogin
 			user = &domain.User{
 				Name:    name,
 				Email:   email,
-				Role:    req.Role,
+				Roles:   []string{req.Role},
 				AppleID: &appleID,
 			}
 			if err := a.userRepo.Create(ctx, user); err != nil {
@@ -179,7 +179,7 @@ func (a *authUsecase) LoginWithApple(ctx context.Context, req *domain.OAuthLogin
 		}
 	}
 
-	token, err := utils.GenerateToken(user.ID, user.Email, user.Role)
+	token, err := utils.GenerateToken(user.ID, user.Email, user.Roles)
 	if err != nil {
 		return nil, err
 	}

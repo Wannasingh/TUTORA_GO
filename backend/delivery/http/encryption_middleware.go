@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"io"
 	"net/http"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 	"github.com/Wannasingh/TUTORA_GO/backend/config"
@@ -24,6 +25,12 @@ type ResponsePayload struct {
 // DecryptionMiddleware decrypts incoming encrypted JSON request bodies
 func DecryptionMiddleware(cfg *config.Config) gin.HandlerFunc {
 	return func(c *gin.Context) {
+		contentType := c.Request.Header.Get("Content-Type")
+		if contentType != "" && !strings.Contains(strings.ToLower(contentType), "application/json") {
+			c.Next()
+			return
+		}
+
 		// Read raw body bytes
 		bodyBytes, err := io.ReadAll(c.Request.Body)
 		if err != nil {
@@ -80,6 +87,12 @@ func (w *encryptionWriter) WriteString(s string) (int, error) {
 // EncryptionMiddleware encrypts outgoing JSON responses using AES-GCM
 func EncryptionMiddleware(cfg *config.Config) gin.HandlerFunc {
 	return func(c *gin.Context) {
+		contentType := c.Request.Header.Get("Content-Type")
+		if contentType != "" && !strings.Contains(strings.ToLower(contentType), "application/json") {
+			c.Next()
+			return
+		}
+
 		buffer := &bytes.Buffer{}
 		writer := &encryptionWriter{
 			ResponseWriter: c.Writer,
