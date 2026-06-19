@@ -47,7 +47,7 @@ func TestLoginWithEmail_Success(t *testing.T) {
 		ID:           1,
 		Name:         "Login User",
 		Email:        "login@example.com",
-		Role:         "student",
+		Roles:        []string{"student"},
 		PasswordHash: &passHashStr,
 	}
 
@@ -83,7 +83,7 @@ func TestLoginWithEmail_InvalidCredentials(t *testing.T) {
 		ID:           1,
 		Name:         "Login User",
 		Email:        "login@example.com",
-		Role:         "student",
+		Roles:        []string{"student"},
 		PasswordHash: &passHashStr,
 	}
 

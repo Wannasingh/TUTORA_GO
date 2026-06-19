@@ -14,6 +14,11 @@ type Config struct {
 	GoogleClientID       string
 	AppleBundleID        string
 	PayloadEncryptionKey string
+	OCIS3AccessKeyID     string
+	OCIS3SecretAccessKey string
+	OCIS3Region          string
+	OCIS3BucketName      string
+	OCIS3Endpoint        string
 }
 
 func LoadConfig() *Config {
@@ -28,6 +33,11 @@ func LoadConfig() *Config {
 	googleClientID := getEnv("GOOGLE_CLIENT_ID", "")
 	appleBundleID := getEnv("APPLE_BUNDLE_ID", "")
 	payloadEncryptionKey := getEnv("PAYLOAD_ENCRYPTION_KEY", "TutoraDefaultPayloadEncryptKey32c")
+	ociAccessKeyID := getEnv("OCI_S3_ACCESS_KEY_ID", "")
+	ociSecretAccessKey := getEnv("OCI_S3_SECRET_ACCESS_KEY", "")
+	ociRegion := getEnv("OCI_S3_REGION", "")
+	ociBucketName := getEnv("OCI_S3_BUCKET_NAME", "")
+	ociEndpoint := getEnv("OCI_S3_ENDPOINT", "")
 
 	return &Config{
 		Port:                 port,
@@ -36,6 +46,11 @@ func LoadConfig() *Config {
 		GoogleClientID:       googleClientID,
 		AppleBundleID:        appleBundleID,
 		PayloadEncryptionKey: payloadEncryptionKey,
+		OCIS3AccessKeyID:     ociAccessKeyID,
+		OCIS3SecretAccessKey: ociSecretAccessKey,
+		OCIS3Region:          ociRegion,
+		OCIS3BucketName:      ociBucketName,
+		OCIS3Endpoint:        ociEndpoint,
 	}
 }
 

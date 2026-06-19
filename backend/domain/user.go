@@ -6,10 +6,11 @@ type User struct {
 	ID           int     `json:"id"`
 	Name         string  `json:"name"`
 	Email        string  `json:"email"`
-	Role         string  `json:"role"` // "student" or "tutor"
+	Roles        []string `json:"roles"` // e.g. ["student", "tutor"]
 	PasswordHash *string `json:"-"`
 	GoogleID     *string `json:"google_id,omitempty"`
 	AppleID      *string `json:"apple_id,omitempty"`
+	AvatarURL    *string `json:"avatar_url,omitempty"`
 	CreatedAt    string  `json:"created_at"`
 	UpdatedAt    string  `json:"updated_at"`
 }

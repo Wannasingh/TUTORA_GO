@@ -68,7 +68,7 @@ func TestRegisterUser_Success(t *testing.T) {
 	user := &domain.User{
 		Name:  "Test User",
 		Email: "test@example.com",
-		Role:  "student",
+		Roles: []string{"student"},
 	}
 
 	err := u.Register(context.Background(), user)
@@ -100,7 +100,7 @@ func TestRegisterUser_DuplicateEmail(t *testing.T) {
 	user := &domain.User{
 		Name:  "Test User",
 		Email: "test@example.com",
-		Role:  "student",
+		Roles: []string{"student"},
 	}
 
 	err := u.Register(context.Background(), user)
@@ -166,7 +166,7 @@ func TestRegisterUser_RepoError(t *testing.T) {
 	user := &domain.User{
 		Name:  "Test User",
 		Email: "test@example.com",
-		Role:  "student",
+		Roles: []string{"student"},
 	}
 
 	err := u.Register(context.Background(), user)
